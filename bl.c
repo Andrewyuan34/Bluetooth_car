@@ -1,18 +1,18 @@
 #include "bl.h"
 
-uint8_t aRxBuffer[5]={0,0,0,0,0};//À¶ÑÀ½ÓÊÕ»º´æ
+uint8_t aRxBuffer[5]={0,0,0,0,0};//Bluetooth receiver Cache
 
 
-// ´®¿ÚÖĞ¶Ï·şÎñº¯Êı
+// USART interruption server
 void USART2_IRQHandler(void)
 {
 	uint8_t res = 0;
 	static uint8_t rxConut=0;
-	//½ÓÊÕÖĞ¶Ï
+	//receive
 	if(__HAL_UART_GET_FLAG(&huart2,UART_FLAG_RXNE) != RESET)
 	{
 	HAL_UART_Receive(&huart2,&res,1,1000);
-	//½«Êı¾İ·ÅÈë»º³åÇø
+	//put data into Cache
 	if(rxConut < 6)
 	{
 		aRxBuffer[rxConut] = res;
@@ -20,12 +20,12 @@ void USART2_IRQHandler(void)
 	}
 	__HAL_UART_CLEAR_FLAG(&huart2,UART_FLAG_RXNE);
 	}
-	//¿ÕÏĞÖĞ¶Ï
+	//free interruption
 	if(__HAL_UART_GET_FLAG(&huart2,UART_FLAG_IDLE) != RESET)
 	{
-		HAL_UART_Transmit(&huart2,aRxBuffer, rxConut,1000);//Ò»Ö¡Êı¾İ½ÓÊÕÍê³É
+		HAL_UART_Transmit(&huart2,aRxBuffer, rxConut,1000);//receive one byte
 		
-		memcpy((char*)Buffer,aRxBuffer,rxConut);//±¸·İÊı¾İ
+		memcpy((char*)Buffer,aRxBuffer,rxConut);//copy data
     //Car_Data(aRxBuffer, rxConut);	
 		rxConut = 0;
 		__HAL_UART_CLEAR_IDLEFLAG(&huart2);
@@ -33,7 +33,7 @@ void USART2_IRQHandler(void)
 	}
 }
 
-//´¦Àí½ÓÊÕµ½µÄÊı¾İ
+//process data
 void Car_Data(uint8_t *buf, uint8_t len )
 {
 	if ((char)buf[0]!='A'	)
@@ -45,23 +45,23 @@ void Car_Data(uint8_t *buf, uint8_t len )
 			if ((char)buf[2]=='1'	)
 			{
 				if(Fa_s==0)
-				Car_advance();//Ç°½ø
+				Car_advance();//å‰è¿›
 			}
 			  
 			else if ((char)buf[2]=='2')
-				Car_back();//ºóÍË
+				Car_back();//åé€€
 			else if ((char)buf[2]=='3')
-				Car_L();//×ó
+				Car_L();//å·¦
 			else if ((char)buf[2]=='4')
-				Car_R();//ÓÒ×ª
+				Car_R();//å³è½¬
 	  } 
 		if ((char)buf[2]=='0'	)
-		  Car_S();//Í£Ö¹
+		  Car_S();//åœæ­¢
 	}
 	else if ((char)buf[1]=='1')
 	{
 	 if ((char)buf[2]=='1' )
-	 {Car_S();//Í£Ö¹
+	 {Car_S();//åœæ­¢
 		 xj=0;}
 	 else if((char)buf[2]=='2' )
 		 xj=1;
